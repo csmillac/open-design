@@ -325,7 +325,15 @@ export function openSandboxedPreviewInNewTab(
   title: string,
   srcdocOptions?: SrcdocOptions,
 ): void {
-  const doc = buildSandboxedPreviewDocument(buildSrcdoc(html, srcdocOptions), title);
+  // Open the artifact HTML directly as a blob URL so it renders at full
+  // fidelity. The double-nested approach (outer blob doc + inner sandboxed
+  // iframe with only allow-scripts) gives the inner document a null/opaque
+  // origin, which silently breaks dynamically-injected CSS (Tailwind CDN,
+  // CSS-in-JS, CSSStyleSheet APIs) and external font/stylesheet loading.
+  // buildSrcdoc already handles the runtime safety (localStorage shim, link
+  // intercept). noopener+noreferrer means the artifact cannot reach back into
+  // the app's open windows, so same-origin blob access is not a concern here.
+  const doc = buildSrcdoc(html, srcdocOptions);
   const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank', 'noopener,noreferrer');
