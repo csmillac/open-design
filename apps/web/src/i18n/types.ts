@@ -1139,6 +1139,7 @@ export interface Dict {
   'fileViewer.exportZip': string;
   'fileViewer.exportHtml': string;
   'fileViewer.exportPng': string;
+  'fileViewer.exportPngGenerating': string;
   'fileViewer.exportMd': string;
   'fileViewer.exportJsx': string;
   'fileViewer.exportReactHtml': string;

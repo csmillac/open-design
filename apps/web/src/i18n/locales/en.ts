@@ -882,6 +882,7 @@ export const en: Dict = {
   'fileViewer.exportZip': 'Download as .zip',
   'fileViewer.exportHtml': 'Export as standalone HTML',
   'fileViewer.exportPng': 'Export as PNG',
+  'fileViewer.exportPngGenerating': 'Generating PNG…',
   'fileViewer.exportMd': 'Export as Markdown',
   'fileViewer.exportJsx': 'Export as JSX',
   'fileViewer.exportReactHtml': 'Export preview as HTML',

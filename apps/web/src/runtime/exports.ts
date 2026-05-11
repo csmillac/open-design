@@ -229,14 +229,22 @@ export async function exportAsPng(
   opts?: SrcdocOptions,
 ): Promise<void> {
   const filename = `${safeFilename(title, 'artifact')}.png`;
+  const CAPTURE_WIDTH = 1280;
+
+  // Fetch html2canvas and inline it into the capture iframe. Using <script src>
+  // in a srcdoc iframe is unreliable because the document base URL is
+  // about:srcdoc, not the parent origin. Inlining the text executes
+  // synchronously on DOM insertion and avoids any URL resolution ambiguity.
+  const h2cText = await fetch('/html2canvas.min.js').then((r) => {
+    if (!r.ok) throw new Error(`Failed to fetch html2canvas: ${r.status}`);
+    return r.text();
+  });
 
   const iframe = document.createElement('iframe');
-  // allow-same-origin lets us inject scripts into the iframe document after load.
-  // html2canvas must run inside the iframe's JS context so it can access the
-  // computed styles and stylesheets that were applied there.
+  // allow-same-origin so the parent can reach contentDocument to inject scripts.
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   iframe.style.cssText =
-    'position:fixed;left:-9999px;top:-9999px;width:1280px;height:800px;opacity:0;pointer-events:none;border:0;';
+    `position:fixed;left:-9999px;top:-9999px;width:${CAPTURE_WIDTH}px;height:800px;opacity:0;pointer-events:none;border:0;`;
   iframe.srcdoc = buildSrcdoc(html, opts);
   document.body.appendChild(iframe);
 
@@ -249,40 +257,58 @@ export async function exportAsPng(
     const iframeDoc = iframe.contentDocument;
     if (!iframeDoc) throw new Error('Cannot access iframe document');
 
-    try { await iframeDoc.fonts?.ready; } catch { /* ignore */ }
+    try { await (iframeDoc.fonts as FontFaceSet | undefined)?.ready; } catch { /* ignore */ }
 
-    // Inject html2canvas from the public folder into the iframe's JS context.
-    await new Promise<void>((resolve, reject) => {
-      const script = iframeDoc.createElement('script');
-      script.src = '/html2canvas.min.js';
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load html2canvas in iframe'));
-      iframeDoc.head.appendChild(script);
-    });
+    // Inject html2canvas inline — the UMD bundle registers window.html2canvas
+    // synchronously, so it is available to the capture script immediately.
+    const h2cScript = iframeDoc.createElement('script');
+    h2cScript.textContent = h2cText;
+    iframeDoc.head.appendChild(h2cScript);
 
-    // Run html2canvas inside the iframe so it has access to the iframe's
-    // computed styles. The result is sent back to the parent via postMessage.
+    // Expand the hidden iframe to the full document height so html2canvas
+    // captures the complete content, not just the initial viewport.
+    const contentH = Math.max(
+      iframeDoc.documentElement.scrollHeight,
+      iframeDoc.body?.scrollHeight ?? 0,
+      800,
+    );
+    iframe.style.height = `${contentH}px`;
+
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const tid = setTimeout(() => {
-        window.removeEventListener('message', onMessage);
+        window.removeEventListener('message', onMsg);
         reject(new Error('PNG capture timed out'));
       }, 30_000);
 
-      function onMessage(evt: MessageEvent) {
+      function onMsg(evt: MessageEvent) {
         if (evt.source !== iframe.contentWindow) return;
         const data = evt.data as { type?: string; dataUrl?: string; error?: string };
         if (data?.type !== 'od:png-data') return;
         clearTimeout(tid);
-        window.removeEventListener('message', onMessage);
+        window.removeEventListener('message', onMsg);
         if (data.error) { reject(new Error(data.error)); return; }
         if (data.dataUrl) { resolve(data.dataUrl); return; }
         reject(new Error('no dataUrl in od:png-data message'));
       }
 
-      window.addEventListener('message', onMessage);
+      window.addEventListener('message', onMsg);
 
+      // Run capture inside the iframe so html2canvas reads the artifact's own
+      // computed styles, not the parent page's styles.
       const captureScript = iframeDoc.createElement('script');
-      captureScript.textContent = `(function(){try{html2canvas(document.documentElement,{width:1280,height:800,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',scale:1,logging:false}).then(function(c){window.parent.postMessage({type:'od:png-data',dataUrl:c.toDataURL('image/png')},'*')}).catch(function(e){window.parent.postMessage({type:'od:png-data',error:String(e)},'*')})}catch(e){window.parent.postMessage({type:'od:png-data',error:String(e)},'*')}})();`;
+      captureScript.textContent =
+        `(function(){`
+        + `var w=${CAPTURE_WIDTH},`
+        + `h=Math.max(document.documentElement.scrollHeight,`
+        + `document.body?document.body.scrollHeight:0,800);`
+        + `html2canvas(document.documentElement,{`
+        + `width:w,height:h,windowWidth:w,windowHeight:h,`
+        + `useCORS:true,allowTaint:true,backgroundColor:'#ffffff',scale:1,logging:false`
+        + `}).then(function(c){`
+        + `window.parent.postMessage({type:'od:png-data',dataUrl:c.toDataURL('image/png')},'*')`
+        + `}).catch(function(e){`
+        + `window.parent.postMessage({type:'od:png-data',error:String(e)},'*')`
+        + `})})();`;
       iframeDoc.body.appendChild(captureScript);
     });
 

@@ -2961,6 +2961,7 @@ function HtmlViewer({
   const zoomMenuRef = useRef<HTMLDivElement | null>(null);
   const [presentMenuOpen, setPresentMenuOpen] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [pngExporting, setPngExporting] = useState(false);
   // Template save UX. We surface a transient "Saved" pill in the share
   // menu so the user gets feedback without a noisy toast layer.
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -4626,13 +4627,15 @@ function HtmlViewer({
                     type="button"
                     className="share-menu-item"
                     role="menuitem"
+                    disabled={pngExporting}
                     onClick={() => {
                       setShareMenuOpen(false);
-                      void exportAsPng(source ?? '', exportTitle);
+                      setPngExporting(true);
+                      exportAsPng(source ?? '', exportTitle).finally(() => setPngExporting(false));
                     }}
                   >
                     <span className="share-menu-icon"><Icon name="image" size={14} /></span>
-                    <span>{t('fileViewer.exportPng')}</span>
+                    <span>{pngExporting ? t('fileViewer.exportPngGenerating') : t('fileViewer.exportPng')}</span>
                   </button>
                   {/* Export as Markdown — pass-through download of the
                       artifact source with a `.md` extension. No conversion
