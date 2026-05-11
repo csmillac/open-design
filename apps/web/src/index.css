@@ -6511,6 +6511,50 @@ button.connector-action.is-loading {
   justify-content: center;
   color: var(--text-muted);
 }
+.design-card-rename {
+  position: absolute;
+  top: 8px;
+  right: 36px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 1;
+  background: var(--bg-panel);
+  opacity: 0;
+  transition: opacity 0.15s;
+  border-color: var(--border);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+.design-card:hover .design-card-rename,
+.design-card:focus-within .design-card-rename,
+.design-kanban-card:hover .design-card-rename,
+.design-kanban-card:focus-within .design-card-rename,
+.design-card-rename:focus-visible { opacity: 1; }
+.design-card-rename:hover { color: var(--text-strong); border-color: var(--border-strong); }
+@media (hover: none) {
+  .design-card .design-card-rename,
+  .design-kanban-card .design-card-rename { opacity: 1; }
+}
+.design-card-name-input {
+  width: 100%;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-strong);
+  background: var(--bg-input, var(--bg-panel));
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin: -2px -5px;
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+  font-family: inherit;
+}
 .design-card:hover .design-card-close,
 .design-card:focus-within .design-card-close,
 .design-kanban-card:hover .design-card-close,

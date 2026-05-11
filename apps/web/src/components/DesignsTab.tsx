@@ -55,6 +55,7 @@ interface Props {
 	onOpen: (id: string) => void;
 	onOpenLiveArtifact: (projectId: string, artifactId: string) => void;
 	onDelete: (id: string) => void;
+	onRename: (id: string, newName: string) => void;
 }
 
 export function DesignsTab({
@@ -64,9 +65,12 @@ export function DesignsTab({
 	onOpen,
 	onOpenLiveArtifact,
 	onDelete,
+	onRename,
 }: Props) {
 	const t = useT();
 	const [filter, setFilter] = useState("");
+	const [renamingId, setRenamingId] = useState<string | null>(null);
+	const [renameValue, setRenameValue] = useState("");
 	const [sub, setSub] = useState<SubTab>("recent");
 	const [liveArtifactsByProject, setLiveArtifactsByProject] = useState<
 		Record<string, LiveArtifactSummary[]>
@@ -354,6 +358,18 @@ export function DesignsTab({
 								>
 									<Icon name="close" size={12} />
 								</button>
+								<button
+									className="design-card-rename"
+									title={t("designs.renameTitle")}
+									aria-label={t("designs.renameAria", { name: p.name })}
+									onClick={(e) => {
+										e.stopPropagation();
+										setRenamingId(p.id);
+										setRenameValue(p.name);
+									}}
+								>
+									<Icon name="edit" size={12} />
+								</button>
 								<div className="design-card-thumb" aria-hidden>
 									{liveCount > 0 ? (
 										<span className="design-live-count">
@@ -362,9 +378,44 @@ export function DesignsTab({
 									) : null}
 								</div>
 								<div className="design-card-meta-block">
-									<div className="design-card-name" title={p.name}>
-										{p.name}
-									</div>
+									{renamingId === p.id ? (
+										<input
+											className="design-card-name-input"
+											autoFocus
+											value={renameValue}
+											placeholder={t("designs.renamePlaceholder")}
+											onClick={(e) => e.stopPropagation()}
+											onChange={(e) => setRenameValue(e.target.value)}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													e.preventDefault();
+													const trimmed = renameValue.trim();
+													if (trimmed) onRename(p.id, trimmed);
+													setRenamingId(null);
+												} else if (e.key === "Escape") {
+													e.preventDefault();
+													setRenamingId(null);
+												}
+											}}
+											onBlur={() => {
+												const trimmed = renameValue.trim();
+												if (trimmed) onRename(p.id, trimmed);
+												setRenamingId(null);
+											}}
+										/>
+									) : (
+										<div
+											className="design-card-name"
+											title={p.name}
+											onDoubleClick={(e) => {
+												e.stopPropagation();
+												setRenamingId(p.id);
+												setRenameValue(p.name);
+											}}
+										>
+											{p.name}
+										</div>
+									)}
 									<div className="design-card-meta">
 										{ds ? (
 											<span className="ds">{ds}</span>
@@ -431,27 +482,65 @@ export function DesignsTab({
 													<button
 														className="design-card-close"
 														title={t("designs.deleteTitle")}
-														aria-label={t("designs.deleteAria", {
-															name: p.name,
-														})}
+														aria-label={t("designs.deleteAria", { name: p.name })}
 														onClick={(e) => {
 															e.stopPropagation();
-															if (
-																confirm(
-																	t("designs.deleteConfirm", { name: p.name }),
-																)
-															)
+															if (confirm(t("designs.deleteConfirm", { name: p.name })))
 																onDelete(p.id);
 														}}
 													>
 														<Icon name="close" size={12} />
 													</button>
-													<div
-														className="design-kanban-card-name"
-														title={p.name}
+													<button
+														className="design-card-rename"
+														title={t("designs.renameTitle")}
+														aria-label={t("designs.renameAria", { name: p.name })}
+														onClick={(e) => {
+															e.stopPropagation();
+															setRenamingId(p.id);
+															setRenameValue(p.name);
+														}}
 													>
-														{p.name}
-													</div>
+														<Icon name="edit" size={12} />
+													</button>
+													{renamingId === p.id ? (
+														<input
+															className="design-card-name-input"
+															autoFocus
+															value={renameValue}
+															placeholder={t("designs.renamePlaceholder")}
+															onClick={(e) => e.stopPropagation()}
+															onChange={(e) => setRenameValue(e.target.value)}
+															onKeyDown={(e) => {
+																if (e.key === "Enter") {
+																	e.preventDefault();
+																	const trimmed = renameValue.trim();
+																	if (trimmed) onRename(p.id, trimmed);
+																	setRenamingId(null);
+																} else if (e.key === "Escape") {
+																	e.preventDefault();
+																	setRenamingId(null);
+																}
+															}}
+															onBlur={() => {
+																const trimmed = renameValue.trim();
+																if (trimmed) onRename(p.id, trimmed);
+																setRenamingId(null);
+															}}
+														/>
+													) : (
+														<div
+															className="design-kanban-card-name"
+															title={p.name}
+															onDoubleClick={(e) => {
+																e.stopPropagation();
+																setRenamingId(p.id);
+																setRenameValue(p.name);
+															}}
+														>
+															{p.name}
+														</div>
+													)}
 													<div className="design-kanban-card-meta">
 														{ds ? (
 															<span className="ds">{ds}</span>

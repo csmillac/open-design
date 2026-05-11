@@ -38,6 +38,7 @@ import {
   exportAsJsx,
   exportAsMd,
   exportAsPdf,
+  exportAsPng,
   exportProjectAsPdf,
   exportProjectAsZip,
   exportReactComponentAsHtml,
@@ -4620,6 +4621,18 @@ function HtmlViewer({
                   >
                     <span className="share-menu-icon"><Icon name="file-code" size={14} /></span>
                     <span>{t('fileViewer.exportHtml')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="share-menu-item"
+                    role="menuitem"
+                    onClick={() => {
+                      setShareMenuOpen(false);
+                      void exportAsPng(source ?? '', exportTitle);
+                    }}
+                  >
+                    <span className="share-menu-icon"><Icon name="image" size={14} /></span>
+                    <span>{t('fileViewer.exportPng')}</span>
                   </button>
                   {/* Export as Markdown — pass-through download of the
                       artifact source with a `.md` extension. No conversion

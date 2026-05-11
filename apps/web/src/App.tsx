@@ -689,6 +689,11 @@ export function App() {
     }
   }, [route]);
 
+  const handleRenameProject = useCallback(async (id: string, newName: string) => {
+    setProjects((curr) => curr.map((p) => (p.id === id ? { ...p, name: newName } : p)));
+    await patchProject(id, { name: newName });
+  }, []);
+
   const handleBack = useCallback(() => {
     navigate({ kind: 'home' });
   }, []);
@@ -929,6 +934,7 @@ export function App() {
           onOpenProject={handleOpenProject}
           onOpenLiveArtifact={handleOpenLiveArtifact}
           onDeleteProject={handleDeleteProject}
+          onRenameProject={handleRenameProject}
           onChangeDefaultDesignSystem={handleChangeDefaultDesignSystem}
           onOpenSettings={openSettings}
           onAdoptPet={openPetSettings}
