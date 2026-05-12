@@ -869,8 +869,6 @@ export const zhCN: Dict = {
   'fileViewer.exportPptxNa': '此处暂不支持导出 PPTX。',
   'fileViewer.exportZip': '下载为 .zip',
   'fileViewer.exportHtml': '导出为独立 HTML',
-  'fileViewer.exportPng': 'Export as PNG',
-  'fileViewer.exportPngGenerating': 'Generating PNG…',
   'fileViewer.exportMd': '导出为 Markdown',
   'fileViewer.exportJsx': '导出为 JSX',
   'fileViewer.exportReactHtml': '导出预览 HTML',
